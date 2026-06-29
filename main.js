@@ -116,13 +116,10 @@ let lastRenderedPhysicalIndex = -1;
 // Draw frame on canvas with aspect ratio preservation (Object-Fit: Contain simulation)
 // Fits the entire animation frame inside the canvas viewport without any cropping.
 // Uses an O(1) lastDrawnFrameIndex fallback cache to prevent layout-blocking loops.
-function drawFrame(logicalIndex, forceRedraw = false) {
-  // Map logical index (1 to 900) to physical index (1 to 240)
-  const physicalIndex = Math.min(240, Math.max(1, Math.round(((logicalIndex - 1) / (totalFrames - 1)) * (240 - 1)) + 1));
-  
-  let img = images[physicalIndex];
+function drawFrame(index, forceRedraw = false) {
+  let img = images[index];
   if (img && img.complete) {
-    lastDrawnFrameIndex = physicalIndex;
+    lastDrawnFrameIndex = index;
   } else {
     img = images[lastDrawnFrameIndex];
   }
@@ -132,10 +129,10 @@ function drawFrame(logicalIndex, forceRedraw = false) {
   }
 
   // Only redraw if the physical image or canvas size changed
-  if (!forceRedraw && physicalIndex === lastRenderedPhysicalIndex) {
+  if (!forceRedraw && index === lastRenderedPhysicalIndex) {
     return;
   }
-  lastRenderedPhysicalIndex = physicalIndex;
+  lastRenderedPhysicalIndex = index;
 
   const canvasWidth = canvas.width;
   const canvasHeight = canvas.height;
@@ -175,7 +172,7 @@ function updateLoadingProgress(count) {
   progressPercentage.innerText = `${percent}%`;
   
   if (dbLoaded) {
-    dbLoaded.innerText = `${loadedCount} / 240`;
+    dbLoaded.innerText = `${loadedCount} / ${totalFrames}`;
   }
   
   if (percent >= 100) {
@@ -213,7 +210,7 @@ function onPhase1ImageError(e) {
 function onProgressiveImageLoad() {
   loadedCount++;
   if (dbLoaded) {
-    dbLoaded.innerText = `${loadedCount} / 240`;
+    dbLoaded.innerText = `${loadedCount} / ${totalFrames}`;
   }
 }
 
@@ -221,7 +218,7 @@ function onProgressiveImageError(e) {
   console.warn("Progressive frame failed to load: ", e.target.src);
   loadedCount++;
   if (dbLoaded) {
-    dbLoaded.innerText = `${loadedCount} / 240`;
+    dbLoaded.innerText = `${loadedCount} / ${totalFrames}`;
   }
 }
 
@@ -239,7 +236,7 @@ function startPreloading() {
   }
 
   let phase1FinishedCount = 0;
-  const phase1Target = Math.min(immediateFramesCount, 240);
+  const phase1Target = Math.min(immediateFramesCount, totalFrames);
 
   function checkPhase1Finished() {
     phase1FinishedCount++;
@@ -267,13 +264,13 @@ function startPreloading() {
 // Phase 2: Load remaining frames progressively in the background using a concurrency-limited pool
 function startProgressivePreload() {
   const start = immediateFramesCount + 1;
-  if (start > 240) return;
+  if (start > totalFrames) return;
 
   const maxConcurrency = 15;
   let nextIndexToLoad = start;
 
   function loadNext() {
-    if (nextIndexToLoad > 240) return;
+    if (nextIndexToLoad > totalFrames) return;
 
     const i = nextIndexToLoad++;
     const img = new Image();
