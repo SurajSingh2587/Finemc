@@ -83,13 +83,10 @@ let lastRenderedPhysicalIndex = -1;
 // Draw frame on canvas with aspect ratio preservation (Object-Fit: Contain simulation)
 // Fits the entire animation frame inside the canvas viewport without any cropping.
 // Uses an O(1) lastDrawnFrameIndex fallback cache to prevent layout-blocking loops.
-function drawFrame(logicalIndex, forceRedraw = false) {
-  // Map logical index (1 to 600) to physical index (1 to 240)
-  const physicalIndex = Math.min(240, Math.max(1, Math.round(((logicalIndex - 1) / (totalFrames - 1)) * (240 - 1)) + 1));
-  
-  let img = images[physicalIndex];
+function drawFrame(index, forceRedraw = false) {
+  let img = images[index];
   if (img && img.complete) {
-    lastDrawnFrameIndex = physicalIndex;
+    lastDrawnFrameIndex = index;
   } else {
     img = images[lastDrawnFrameIndex];
   }
@@ -99,10 +96,10 @@ function drawFrame(logicalIndex, forceRedraw = false) {
   }
 
   // Only redraw if the physical image or canvas size changed
-  if (!forceRedraw && physicalIndex === lastRenderedPhysicalIndex) {
+  if (!forceRedraw && index === lastRenderedPhysicalIndex) {
     return;
   }
-  lastRenderedPhysicalIndex = physicalIndex;
+  lastRenderedPhysicalIndex = index;
 
   const canvasWidth = canvas.width;
   const canvasHeight = canvas.height;
@@ -135,7 +132,7 @@ function drawFrame(logicalIndex, forceRedraw = false) {
 
 // Update loading progress UI
 function updateLoadingProgress(count) {
-  const maxToLoad = prefersReducedMotion ? 1 : 240;
+  const maxToLoad = prefersReducedMotion ? 1 : totalFrames;
   const percent = Math.min(100, Math.round((count / maxToLoad) * 100));
   
   progressBar.style.width = `${percent}%`;
@@ -189,7 +186,7 @@ function startPreloading() {
   }
 
   let phase1FinishedCount = 0;
-  const phase1Target = Math.min(immediateFramesCount, 240);
+  const phase1Target = Math.min(immediateFramesCount, totalFrames);
 
   function checkPhase1Finished() {
     phase1FinishedCount++;
@@ -217,9 +214,9 @@ function startPreloading() {
 // Phase 2: Load remaining frames progressively
 function startProgressivePreload() {
   const start = immediateFramesCount + 1;
-  if (start > 240) return;
+  if (start > totalFrames) return;
 
-  for (let i = start; i <= 240; i++) {
+  for (let i = start; i <= totalFrames; i++) {
     const img = new Image();
     img.onload = () => {
       images[i] = img;
