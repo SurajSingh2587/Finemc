@@ -28,8 +28,8 @@ const ease = 0.1; // Smooth canvas glide interpolation
 let currentActiveSlideIdx = -1;
 let lastDrawnFrameIndex = 1; // Eased fallback cache
 
-const forceAnimations = localStorage.getItem('force-animations') === 'true';
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches && !forceAnimations;
+const forceReducedMotion = localStorage.getItem('force-reduced-motion') === 'true';
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches || forceReducedMotion;
 
 // --- DOM Elements ---
 const loader = document.getElementById('loader');
@@ -61,7 +61,39 @@ window.onerror = function(message, source, lineno, colno, error) {
   return false;
 };
 
-// --- Helper Functions ---
+// --- Helper Functions & Idle Breathing ---
+let scrollIdleTimeout = null;
+let isBreathing = false;
+let breathingIntervalId = null;
+let breathingFrameOffset = 0;
+let breathingTick = 0;
+
+function resetScrollIdleTimer() {
+  isBreathing = false;
+  breathingFrameOffset = 0;
+  if (breathingIntervalId) {
+    clearInterval(breathingIntervalId);
+    breathingIntervalId = null;
+  }
+  if (scrollIdleTimeout) {
+    clearTimeout(scrollIdleTimeout);
+  }
+  scrollIdleTimeout = setTimeout(() => {
+    startBreathing();
+  }, 500); // 0.5s idle trigger
+}
+
+function startBreathing() {
+  if (prefersReducedMotion) return;
+  isBreathing = true;
+  breathingTick = 0;
+  
+  breathingIntervalId = setInterval(() => {
+    breathingTick++;
+    // Oscillate back and forth smoothly by 3 frames at 5fps (200ms)
+    breathingFrameOffset = Math.round(Math.sin(breathingTick * 0.8) * 3);
+  }, 200);
+}
 // Sized canvas relative to its parent container (the split-screen left viewport)
 // This guarantees it fits the designated area exactly and never overflows or crops under panels
 function setCanvasSize() {
@@ -228,20 +260,45 @@ function startPreloading() {
   }
 }
 
-// Phase 2: Load remaining frames progressively
+// Phase 2: Load remaining frames in batches of 15 to prevent network choking
 function startProgressivePreload() {
   const start = immediateFramesCount + 1;
   if (start > totalFrames) return;
 
-  for (let i = start; i <= totalFrames; i++) {
-    const img = new Image();
-    img.onload = () => {
-      images[i] = img;
-      onProgressiveImageLoad();
-    };
-    img.onerror = onProgressiveImageError;
-    img.src = framePathPattern(i);
+  const batchSize = 15;
+  let currentLoadingIndex = start;
+
+  function loadNextBatch() {
+    if (currentLoadingIndex > totalFrames) return;
+    
+    let loadedInBatch = 0;
+    const limit = Math.min(currentLoadingIndex + batchSize - 1, totalFrames);
+    const batchCount = limit - currentLoadingIndex + 1;
+
+    for (let i = currentLoadingIndex; i <= limit; i++) {
+      const img = new Image();
+      img.onload = () => {
+        images[i] = img;
+        onProgressiveImageLoad();
+        loadedInBatch++;
+        if (loadedInBatch === batchCount) {
+          currentLoadingIndex += batchSize;
+          setTimeout(loadNextBatch, 10);
+        }
+      };
+      img.onerror = (e) => {
+        onProgressiveImageError(e);
+        loadedInBatch++;
+        if (loadedInBatch === batchCount) {
+          currentLoadingIndex += batchSize;
+          setTimeout(loadNextBatch, 10);
+        }
+      };
+      img.src = framePathPattern(i);
+    }
   }
+
+  loadNextBatch();
 }
 
 // --- Frame Animation Loop ---
@@ -260,7 +317,7 @@ function animateCanvas() {
     }
   }
   
-  const frameToDraw = Math.min(totalFrames, Math.max(1, Math.round(currentFrameIndex)));
+  const frameToDraw = Math.min(totalFrames, Math.max(1, Math.round(currentFrameIndex + breathingFrameOffset)));
   if (!isNaN(frameToDraw)) {
     drawFrame(frameToDraw);
   }
@@ -273,6 +330,7 @@ function animateCanvas() {
 
 // --- Scroll Event Handler ---
 function handleScroll() {
+  resetScrollIdleTimer();
   const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
   
   const scrollHeight = Math.max(
@@ -507,34 +565,29 @@ function init() {
   // Handle Force-Motion buttons
   const btnForceMotion = document.getElementById('btn-force-motion');
   if (btnForceMotion) {
-    const systemPrefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (systemPrefersReduced) {
-      btnForceMotion.style.display = 'inline-block';
-      if (forceAnimations) {
-        btnForceMotion.innerText = "Respect OS";
-        btnForceMotion.style.backgroundColor = '#ff3344';
-        btnForceMotion.style.color = '#ffffff';
-        btnForceMotion.addEventListener('click', () => {
-          localStorage.removeItem('force-animations');
-          window.location.reload();
-        });
-      } else {
-        btnForceMotion.innerText = "Force On";
-        btnForceMotion.style.backgroundColor = 'var(--color-cyan)';
-        btnForceMotion.style.color = '#000000';
-        btnForceMotion.addEventListener('click', () => {
-          localStorage.setItem('force-animations', 'true');
-          window.location.reload();
-        });
-      }
+    btnForceMotion.style.display = 'inline-block';
+    if (forceReducedMotion) {
+      btnForceMotion.innerText = "Allow Motion";
+      btnForceMotion.style.backgroundColor = '#ff3344';
+      btnForceMotion.style.color = '#ffffff';
+      btnForceMotion.addEventListener('click', () => {
+        localStorage.removeItem('force-reduced-motion');
+        window.location.reload();
+      });
+    } else {
+      btnForceMotion.innerText = "Force Reduced Motion";
+      btnForceMotion.style.backgroundColor = 'var(--color-cyan)';
+      btnForceMotion.style.color = '#000000';
+      btnForceMotion.addEventListener('click', () => {
+        localStorage.setItem('force-reduced-motion', 'true');
+        window.location.reload();
+      });
     }
   }
 
-  // Display Diagnostics Panel on localhost
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.search.includes('debug')) {
-    const dbPanel = document.getElementById('debug-panel');
-    if (dbPanel) dbPanel.style.display = 'flex';
-  }
+  // Display Diagnostics Panel (always shown on production web hosting like GitHub, Vercel, Netlify)
+  const dbPanel = document.getElementById('debug-panel');
+  if (dbPanel) dbPanel.style.display = 'flex';
 
   // Bind Listeners (using passive scroll for browser scroll thread performance)
   window.addEventListener('scroll', handleScroll, { passive: true });
@@ -544,6 +597,7 @@ function init() {
   setCanvasSize();
   initInteractiveCards();
   createGlassShards();
+  resetScrollIdleTimer();
   
   // Start loading assets and trigger loop
   startPreloading();
