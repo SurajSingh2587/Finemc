@@ -132,14 +132,14 @@ function drawFrame(index, forceRedraw = false) {
 
 // Update loading progress UI
 function updateLoadingProgress(count) {
-  const maxToLoad = prefersReducedMotion ? 1 : totalFrames;
+  const maxToLoad = prefersReducedMotion ? 1 : 30; // Wait only for first 30 frames (Phase 1)
   const percent = Math.min(100, Math.round((count / maxToLoad) * 100));
   
   progressBar.style.width = `${percent}%`;
   progressPercentage.innerText = `${percent}%`;
   
   if (dbLoaded) {
-    dbLoaded.innerText = `${count} / ${maxToLoad}`;
+    dbLoaded.innerText = `${loadedCount} / ${totalFrames}`;
   }
   
   if (percent >= 100) {
@@ -159,17 +159,34 @@ function dismissPreloader() {
   }
 }
 
-// Handle single image load event
-function onImageLoad() {
+let phase1LoadedCount = 0;
+
+function onPhase1ImageLoad() {
   loadedCount++;
-  updateLoadingProgress(loadedCount);
+  phase1LoadedCount++;
+  updateLoadingProgress(phase1LoadedCount);
 }
 
-// Handle image load error to prevent being stuck on loading screen
-function onImageError(e) {
-  console.warn("Frame failed to load: ", e.target.src);
+function onPhase1ImageError(e) {
+  console.warn("Phase 1 frame failed to load: ", e.target.src);
   loadedCount++;
-  updateLoadingProgress(loadedCount);
+  phase1LoadedCount++;
+  updateLoadingProgress(phase1LoadedCount);
+}
+
+function onProgressiveImageLoad() {
+  loadedCount++;
+  if (dbLoaded) {
+    dbLoaded.innerText = `${loadedCount} / ${totalFrames}`;
+  }
+}
+
+function onProgressiveImageError(e) {
+  console.warn("Progressive frame failed to load: ", e.target.src);
+  loadedCount++;
+  if (dbLoaded) {
+    dbLoaded.innerText = `${loadedCount} / ${totalFrames}`;
+  }
 }
 
 // --- Preloading Strategy ---
@@ -178,9 +195,9 @@ function startPreloading() {
     const img = new Image();
     img.onload = () => {
       images[1] = img;
-      onImageLoad();
+      onPhase1ImageLoad();
     };
-    img.onerror = onImageError;
+    img.onerror = onPhase1ImageError;
     img.src = framePathPattern(1);
     return;
   }
@@ -200,11 +217,11 @@ function startPreloading() {
     const img = new Image();
     img.onload = () => {
       images[i] = img;
-      onImageLoad();
+      onPhase1ImageLoad();
       checkPhase1Finished();
     };
     img.onerror = (e) => {
-      onImageError(e);
+      onPhase1ImageError(e);
       checkPhase1Finished();
     };
     img.src = framePathPattern(i);
@@ -220,9 +237,9 @@ function startProgressivePreload() {
     const img = new Image();
     img.onload = () => {
       images[i] = img;
-      onImageLoad();
+      onProgressiveImageLoad();
     };
-    img.onerror = onImageError;
+    img.onerror = onProgressiveImageError;
     img.src = framePathPattern(i);
   }
 }
