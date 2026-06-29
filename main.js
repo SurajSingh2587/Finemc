@@ -28,8 +28,8 @@ const ease = 0.1; // Smooth canvas glide interpolation
 let currentActiveSlideIdx = -1;
 let lastDrawnFrameIndex = 1; // Eased fallback cache
 
-// Forced Reduced Motion Always On
-const prefersReducedMotion = false;
+const forceAnimations = localStorage.getItem('force-animations') === 'true';
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches && !forceAnimations;
 
 // --- DOM Elements ---
 const loader = document.getElementById('loader');
