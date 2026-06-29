@@ -11,8 +11,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Stylesheet -->
-  <script type="module" crossorigin src="/assets/index-C2BZuX6W.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BNAWj5Vd.css">
+  <script type="module" crossorigin src="/assets/index-BUmr_dQb.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-D8BiOUvv.css">
 </head>
 <body>
   <!-- Cinematic Ambient lighting & particles -->
@@ -46,18 +46,22 @@
     
     <!-- Left Column: Non-Overlapping Canvas Viewport -->
     <div class="canvas-viewport" id="canvas-viewport">
+      <!-- Auto Scroll Trigger Button -->
+      <button id="btn-auto-scroll" class="hud-auto-scroll-btn glass-panel" onclick="toggleAutoScroll()">
+        <span class="pulse-dot"></span>
+        <span class="btn-text">Auto Scroll: OFF</span>
+      </button>
+
       <!-- Centered Canvas Container -->
       <div class="canvas-container">
         <canvas id="scroll-canvas"></canvas>
         <div class="canvas-vignette"></div>
         
-        <!-- Voxel Core Gateway Reticle (Covers the Gemini star watermark - Resizable and Drag-moveable) -->
+        <!-- Voxel Core Gateway Reticle (Covers the Gemini star watermark - Pinned and larger) -->
         <div class="watermark-cover" id="watermark-cover">
           <div class="gateway-core"></div>
           <div class="gateway-ring"></div>
           <div class="gateway-bracket"></div>
-          <div class="drag-handle" id="cover-drag" title="Drag to move">✥</div>
-          <div class="resize-handle" id="cover-resize" title="Drag to resize"></div>
         </div>
       </div>
 

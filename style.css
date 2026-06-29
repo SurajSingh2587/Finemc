@@ -1039,90 +1039,42 @@ p {
   }
 }
 
-/* Holographic Core reticle to cover central star watermark */
+/* Holographic Core reticle to cover central star watermark - Pinned and enlarged */
 .watermark-cover {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 76.5%;
+  left: 69.3%;
   transform: translate(-50%, -50%);
-  width: 80px;
-  height: 80px;
+  width: 160px;
+  height: 160px;
   z-index: 5;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px dashed transparent;
-  transition: border-color 0.3s ease;
-  pointer-events: auto; /* Active for drags/resizes */
-}
-
-.watermark-cover:hover {
-  border-color: rgba(0, 229, 255, 0.4);
+  border: none;
+  pointer-events: none; /* Ignore pointer events since it's no longer draggable/resizable */
 }
 
 .gateway-core,
 .gateway-ring,
 .gateway-bracket {
-  pointer-events: none; /* Let clicks pass straight to the parent handles */
-}
-
-/* Edit Handles */
-.drag-handle {
-  position: absolute;
-  top: -24px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 10px;
-  background: var(--color-cyan);
-  color: #03050c;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: move;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  font-weight: bold;
-  box-shadow: 0 0 10px var(--glow-cyan);
-  z-index: 10;
-}
-
-.resize-handle {
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  width: 8px;
-  height: 8px;
-  background: var(--color-cyan);
-  border-radius: 50%;
-  cursor: se-resize;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  box-shadow: 0 0 8px var(--glow-cyan);
-  z-index: 10;
-}
-
-.watermark-cover:hover .drag-handle,
-.watermark-cover:hover .resize-handle {
-  opacity: 1;
+  pointer-events: none;
 }
 
 .gateway-core {
-  width: 14px;
-  height: 14px;
+  width: 28px;
+  height: 28px;
   background: var(--color-cyan);
   border-radius: 50%;
-  box-shadow: 0 0 15px var(--color-cyan), 0 0 30px rgba(51, 85, 255, 0.5);
+  box-shadow: 0 0 20px var(--color-cyan), 0 0 40px rgba(51, 85, 255, 0.6);
   animation: core-pulse 2s infinite ease-in-out;
 }
 
 .gateway-ring {
   position: absolute;
-  width: 48px;
-  height: 48px;
-  border: 1px dashed rgba(0, 229, 255, 0.4);
+  width: 96px;
+  height: 96px;
+  border: 1.5px dashed rgba(0, 229, 255, 0.45);
   border-radius: 50%;
   animation: spin-ring 12s linear infinite;
 }
@@ -1130,11 +1082,11 @@ p {
 .gateway-ring::before {
   content: "";
   position: absolute;
-  top: -3px;
+  top: -5px;
   left: 50%;
   transform: translateX(-50%);
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--color-cyan);
   box-shadow: 0 0 10px var(--color-cyan);
@@ -1142,10 +1094,10 @@ p {
 
 .gateway-bracket {
   position: absolute;
-  width: 72px;
-  height: 72px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 18px;
+  width: 144px;
+  height: 144px;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 36px;
   transform: rotate(45deg);
   animation: spin-bracket 20s linear infinite reverse;
 }
@@ -1163,5 +1115,57 @@ p {
 @keyframes spin-bracket {
   0% { transform: rotate(45deg); }
   100% { transform: rotate(405deg); }
+}
+
+/* Floating HUD Auto Scroll Button */
+.hud-auto-scroll-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(3, 6, 17, 0.7);
+  border: 1px solid var(--border-glass);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+}
+
+.hud-auto-scroll-btn:hover {
+  background: rgba(3, 6, 17, 0.9);
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 15px var(--glow-cyan);
+  transform: translateY(-1px);
+}
+
+.hud-auto-scroll-btn.active {
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 15px var(--glow-cyan);
+}
+
+.hud-auto-scroll-btn .pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #555;
+  border-radius: 50%;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hud-auto-scroll-btn.active .pulse-dot {
+  background-color: var(--color-cyan);
+  box-shadow: 0 0 8px var(--color-cyan);
+  animation: btn-dot-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes btn-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.3); opacity: 1; }
 }
 

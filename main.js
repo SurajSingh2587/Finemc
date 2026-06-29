@@ -28,9 +28,8 @@ const ease = 0.05; // Smooth canvas glide interpolation
 let currentActiveSlideIdx = -1;
 let lastDrawnFrameIndex = 1; // Eased fallback cache
 
-// Check accessibility preference, check localStorage override
-const forceAnimations = localStorage.getItem('force-animations') === 'true';
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches && !forceAnimations;
+// Forced Reduced Motion Always On
+const prefersReducedMotion = true;
 
 // --- DOM Elements ---
 const loader = document.getElementById('loader');
@@ -427,130 +426,53 @@ function createGlassShards() {
   }
 }
 
-// --- Watermark cover position editor & local storage persistence ---
-function initWatermarkControls() {
-  const cover = document.getElementById('watermark-cover');
-  const dragHandle = document.getElementById('cover-drag');
-  const resizeHandle = document.getElementById('cover-resize');
-  if (!cover) return;
+// --- Auto Scroll loop at 24fps ---
+let autoScrollInterval = null;
+let isAutoScrolling = false;
 
-  // Load saved configurations
-  const savedLeft = localStorage.getItem('cover-left');
-  const savedTop = localStorage.getItem('cover-top');
-  const savedWidth = localStorage.getItem('cover-width');
-  const savedHeight = localStorage.getItem('cover-height');
-
-  if (savedLeft && savedTop) {
-    cover.style.left = savedLeft;
-    cover.style.top = savedTop;
-    cover.style.transform = 'none';
-  }
-  if (savedWidth && savedHeight) {
-    cover.style.width = savedWidth;
-    cover.style.height = savedHeight;
-    updateReticleScale(parseFloat(savedWidth));
-  }
-
-  let isDragging = false;
-  let isResizing = false;
-  let startX, startY, startLeft, startTop, startWidth, startHeight;
-
-  // Drag listeners
-  if (dragHandle) {
-    dragHandle.addEventListener('mousedown', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      isDragging = true;
-
-      // Switch to absolute coordinates if centered via translate transform
-      if (cover.style.transform.includes('translate')) {
-        const rect = cover.getBoundingClientRect();
-        const parentRect = cover.parentElement.getBoundingClientRect();
-        cover.style.transform = 'none';
-        cover.style.left = `${rect.left - parentRect.left}px`;
-        cover.style.top = `${rect.top - parentRect.top}px`;
+window.toggleAutoScroll = function() {
+  const btn = document.getElementById('btn-auto-scroll');
+  if (isAutoScrolling) {
+    clearInterval(autoScrollInterval);
+    autoScrollInterval = null;
+    isAutoScrolling = false;
+    if (btn) {
+      btn.classList.remove('active');
+      btn.querySelector('.btn-text').innerText = "Auto Scroll: OFF";
+    }
+  } else {
+    isAutoScrolling = true;
+    if (btn) {
+      btn.classList.add('active');
+      btn.querySelector('.btn-text').innerText = "Auto Scroll: ON";
+    }
+    
+    const fps = 24;
+    const intervalMs = 1000 / fps;
+    const scrollStep = 15; // pixels per frame (about 360px per second)
+    
+    autoScrollInterval = setInterval(() => {
+      const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      
+      const scrollHeight = Math.max(
+        document.documentElement.scrollHeight || 0,
+        document.body.scrollHeight || 0,
+        document.documentElement.offsetHeight || 0,
+        document.body.offsetHeight || 0
+      );
+      
+      const clientHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight || 0;
+      const maxScroll = scrollHeight - clientHeight;
+      
+      let nextScroll = scrollTop + scrollStep;
+      if (nextScroll >= maxScroll) {
+        nextScroll = 0; // loop back to top
       }
-
-      startX = e.clientX;
-      startY = e.clientY;
-      startLeft = parseInt(cover.style.left) || cover.offsetLeft;
-      startTop = parseInt(cover.style.top) || cover.offsetTop;
-
-      document.addEventListener('mousemove', handleDrag);
-      document.addEventListener('mouseup', stopDrag);
-    });
+      
+      window.scrollTo(0, nextScroll);
+    }, intervalMs);
   }
-
-  function handleDrag(e) {
-    if (!isDragging) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    cover.style.left = `${startLeft + dx}px`;
-    cover.style.top = `${startTop + dy}px`;
-  }
-
-  function stopDrag() {
-    isDragging = false;
-    document.removeEventListener('mousemove', handleDrag);
-    document.removeEventListener('mouseup', stopDrag);
-    localStorage.setItem('cover-left', cover.style.left);
-    localStorage.setItem('cover-top', cover.style.top);
-  }
-
-  // Resize listeners
-  if (resizeHandle) {
-    resizeHandle.addEventListener('mousedown', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      isResizing = true;
-
-      startX = e.clientX;
-      startY = e.clientY;
-      startWidth = cover.offsetWidth;
-      startHeight = cover.offsetHeight;
-
-      document.addEventListener('mousemove', handleResize);
-      document.addEventListener('mouseup', stopResize);
-    });
-  }
-
-  function handleResize(e) {
-    if (!isResizing) return;
-    const dx = e.clientX - startX;
-    const newSize = Math.max(40, Math.min(250, startWidth + dx));
-    cover.style.width = `${newSize}px`;
-    cover.style.height = `${newSize}px`;
-    updateReticleScale(newSize);
-  }
-
-  function stopResize() {
-    isResizing = false;
-    document.removeEventListener('mousemove', handleResize);
-    document.removeEventListener('mouseup', stopResize);
-    localStorage.setItem('cover-width', cover.style.width);
-    localStorage.setItem('cover-height', cover.style.height);
-  }
-
-  function updateReticleScale(size) {
-    const scale = size / 80;
-    const ring = cover.querySelector('.gateway-ring');
-    const bracket = cover.querySelector('.gateway-bracket');
-    const core = cover.querySelector('.gateway-core');
-
-    if (ring) {
-      ring.style.width = `${48 * scale}px`;
-      ring.style.height = `${48 * scale}px`;
-    }
-    if (bracket) {
-      bracket.style.width = `${72 * scale}px`;
-      bracket.style.height = `${72 * scale}px`;
-    }
-    if (core) {
-      core.style.width = `${14 * scale}px`;
-      core.style.height = `${14 * scale}px`;
-    }
-  }
-}
+};
 
 // --- Initialization ---
 function init() {
@@ -597,7 +519,6 @@ function init() {
   setCanvasSize();
   initInteractiveCards();
   createGlassShards();
-  initWatermarkControls();
   
   // Start loading assets and trigger loop
   startPreloading();
