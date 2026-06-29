@@ -27,6 +27,11 @@ let targetFrameIndex = 1;
 const ease = 0.1; // Smooth canvas glide interpolation
 let currentActiveSlideIdx = -1;
 let lastDrawnFrameIndex = 1; // Eased fallback cache
+let cachedCanvasWidth = 0;
+let cachedCanvasHeight = 0;
+let cachedMaxScroll = 0;
+let frameCount = 0;
+const dbPanel = document.getElementById('debug-panel');
 
 const allowMotion = localStorage.getItem('allow-motion') === 'true';
 const prefersReducedMotion = !allowMotion;
@@ -103,12 +108,27 @@ function setCanvasSize() {
     const rect = container.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = rect.height;
+    cachedCanvasWidth = rect.width;
+    cachedCanvasHeight = rect.height;
   } else {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    cachedCanvasWidth = window.innerWidth;
+    cachedCanvasHeight = window.innerHeight;
   }
   const activeFrame = Math.min(totalFrames, Math.max(1, Math.round(currentFrameIndex)));
   drawFrame(activeFrame, true); // force redraw on resize
+}
+
+function updateCachedScrollDimensions() {
+  const scrollHeight = Math.max(
+    document.documentElement.scrollHeight || 0,
+    document.body.scrollHeight || 0,
+    document.documentElement.offsetHeight || 0,
+    document.body.offsetHeight || 0
+  );
+  const clientHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight || 0;
+  cachedMaxScroll = scrollHeight - clientHeight;
 }
 
 let lastRenderedPhysicalIndex = -1;
@@ -134,8 +154,8 @@ function drawFrame(index, forceRedraw = false) {
   }
   lastRenderedPhysicalIndex = index;
 
-  const canvasWidth = canvas.width;
-  const canvasHeight = canvas.height;
+  const canvasWidth = cachedCanvasWidth;
+  const canvasHeight = cachedCanvasHeight;
   const imgWidth = img.width;
   const imgHeight = img.height;
 
@@ -312,8 +332,11 @@ function animateCanvas() {
     drawFrame(frameToDraw);
   }
   
-  if (dbCurrent) dbCurrent.innerText = frameToDraw.toString();
-  if (dbTarget) dbTarget.innerText = Math.round(targetFrameIndex).toString();
+  frameCount++;
+  if (dbPanel && dbPanel.style.display === 'flex' && (frameCount % 10 === 0)) {
+    if (dbCurrent) dbCurrent.innerText = frameToDraw.toString();
+    if (dbTarget) dbTarget.innerText = Math.round(targetFrameIndex).toString();
+  }
   
   requestAnimationFrame(animateCanvas);
 }
@@ -323,15 +346,7 @@ function handleScroll() {
   resetScrollIdleTimer();
   const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
   
-  const scrollHeight = Math.max(
-    document.documentElement.scrollHeight || 0,
-    document.body.scrollHeight || 0,
-    document.documentElement.offsetHeight || 0,
-    document.body.offsetHeight || 0
-  );
-  
-  const clientHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight || 0;
-  const maxScroll = scrollHeight - clientHeight;
+  const maxScroll = cachedMaxScroll;
   const scrollFraction = maxScroll > 0 ? scrollTop / maxScroll : 0;
   
   // 1. Map scroll to canvas frames
@@ -358,7 +373,7 @@ function handleScroll() {
     
     // Toggle Slide DOM classes
     slides.forEach((s) => {
-      const el = document.getElementById(s.id);
+      const el = s.element;
       if (el) {
         if (s.index === currentActiveSlideIdx) {
           el.classList.add('active');
@@ -394,7 +409,7 @@ function handleScroll() {
 
     // Toggle Left-Hand HUD timeline node activation states
     slides.forEach((s) => {
-      const nodeEl = document.getElementById(`node-${s.index}`);
+      const nodeEl = s.nodeElement;
       if (nodeEl) {
         if (s.index === currentActiveSlideIdx) {
           nodeEl.classList.add('active');
@@ -415,11 +430,13 @@ function handleScroll() {
     hudTimelineProgress.style.height = `${scrollFraction * 100}%`;
   }
 
-  // 4. Visual Diagnostics Panel updates
+  // 4. Visual Diagnostics Panel updates (throttled to update only every 10 events)
   scrollCount++;
-  if (dbScrollCount) dbScrollCount.innerText = scrollCount.toString();
-  if (dbScrollY) dbScrollY.innerText = `${Math.round(scrollTop)}px`;
-  if (dbMaxScroll) dbMaxScroll.innerText = `${maxScroll}px`;
+  if (dbPanel && dbPanel.style.display === 'flex' && (scrollCount % 10 === 0)) {
+    if (dbScrollCount) dbScrollCount.innerText = scrollCount.toString();
+    if (dbScrollY) dbScrollY.innerText = `${Math.round(scrollTop)}px`;
+    if (dbMaxScroll) dbMaxScroll.innerText = `${Math.round(maxScroll)}px`;
+  }
 }
 
 // --- Timeline Clicking Scroll Mapper ---
@@ -598,16 +615,25 @@ function init() {
     }
   }
 
+  // Cache slide element references once to prevent layout calculations in scroll loop
+  slides.forEach((s) => {
+    s.element = document.getElementById(s.id);
+    s.nodeElement = document.getElementById(`node-${s.index}`);
+  });
+
   // Display Diagnostics Panel (always shown on production web hosting like GitHub, Vercel, Netlify)
-  const dbPanel = document.getElementById('debug-panel');
   if (dbPanel) dbPanel.style.display = 'flex';
 
   // Bind Listeners (using passive scroll for browser scroll thread performance)
   window.addEventListener('scroll', handleScroll, { passive: true });
-  window.addEventListener('resize', setCanvasSize);
+  window.addEventListener('resize', () => {
+    setCanvasSize();
+    updateCachedScrollDimensions();
+  });
   
   // Run setups
   setCanvasSize();
+  updateCachedScrollDimensions();
   initInteractiveCards();
   createGlassShards();
   resetScrollIdleTimer();
