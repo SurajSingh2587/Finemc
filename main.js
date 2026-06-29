@@ -1,7 +1,7 @@
 // FineMC Slide-Dashboard Controller Script
 
 // --- Configurations ---
-const totalFrames = 240;
+const totalFrames = 600;
 const immediateFramesCount = 30;
 const framePathPattern = (index) => `/frames/frame_${String(index).padStart(4, '0')}.webp`;
 const images = [];
@@ -24,12 +24,12 @@ const slides = [
 let loadedCount = 0;
 let currentFrameIndex = 1;
 let targetFrameIndex = 1;
-const ease = 0.05; // Smooth canvas glide interpolation
+const ease = 0.1; // Smooth canvas glide interpolation
 let currentActiveSlideIdx = -1;
 let lastDrawnFrameIndex = 1; // Eased fallback cache
 
 // Forced Reduced Motion Always On
-const prefersReducedMotion = true;
+const prefersReducedMotion = false;
 
 // --- DOM Elements ---
 const loader = document.getElementById('loader');
@@ -75,16 +75,21 @@ function setCanvasSize() {
     canvas.height = window.innerHeight;
   }
   const activeFrame = Math.min(totalFrames, Math.max(1, Math.round(currentFrameIndex)));
-  drawFrame(activeFrame);
+  drawFrame(activeFrame, true); // force redraw on resize
 }
+
+let lastRenderedPhysicalIndex = -1;
 
 // Draw frame on canvas with aspect ratio preservation (Object-Fit: Contain simulation)
 // Fits the entire animation frame inside the canvas viewport without any cropping.
 // Uses an O(1) lastDrawnFrameIndex fallback cache to prevent layout-blocking loops.
-function drawFrame(index) {
-  let img = images[index];
+function drawFrame(logicalIndex, forceRedraw = false) {
+  // Map logical index (1 to 600) to physical index (1 to 240)
+  const physicalIndex = Math.min(240, Math.max(1, Math.round(((logicalIndex - 1) / (totalFrames - 1)) * (240 - 1)) + 1));
+  
+  let img = images[physicalIndex];
   if (img && img.complete) {
-    lastDrawnFrameIndex = index;
+    lastDrawnFrameIndex = physicalIndex;
   } else {
     img = images[lastDrawnFrameIndex];
   }
@@ -92,6 +97,12 @@ function drawFrame(index) {
   if (!img) {
     return;
   }
+
+  // Only redraw if the physical image or canvas size changed
+  if (!forceRedraw && physicalIndex === lastRenderedPhysicalIndex) {
+    return;
+  }
+  lastRenderedPhysicalIndex = physicalIndex;
 
   const canvasWidth = canvas.width;
   const canvasHeight = canvas.height;
@@ -124,7 +135,7 @@ function drawFrame(index) {
 
 // Update loading progress UI
 function updateLoadingProgress(count) {
-  const maxToLoad = prefersReducedMotion ? 1 : totalFrames;
+  const maxToLoad = prefersReducedMotion ? 1 : 240;
   const percent = Math.min(100, Math.round((count / maxToLoad) * 100));
   
   progressBar.style.width = `${percent}%`;
@@ -178,7 +189,7 @@ function startPreloading() {
   }
 
   let phase1FinishedCount = 0;
-  const phase1Target = Math.min(immediateFramesCount, totalFrames);
+  const phase1Target = Math.min(immediateFramesCount, 240);
 
   function checkPhase1Finished() {
     phase1FinishedCount++;
@@ -206,9 +217,9 @@ function startPreloading() {
 // Phase 2: Load remaining frames progressively
 function startProgressivePreload() {
   const start = immediateFramesCount + 1;
-  if (start > totalFrames) return;
+  if (start > 240) return;
 
-  for (let i = start; i <= totalFrames; i++) {
+  for (let i = start; i <= 240; i++) {
     const img = new Image();
     img.onload = () => {
       images[i] = img;
@@ -447,9 +458,9 @@ window.toggleAutoScroll = function() {
       btn.querySelector('.btn-text').innerText = "Auto Scroll: ON";
     }
     
-    const fps = 24;
+    const fps = 60;
     const intervalMs = 1000 / fps;
-    const scrollStep = 15; // pixels per frame (about 360px per second)
+    const scrollStep = 6; // smooth scroll increment per frame (about 360px per second at 60fps)
     
     autoScrollInterval = setInterval(() => {
       const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
