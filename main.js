@@ -1,7 +1,7 @@
 // FineMC Slide-Dashboard Controller Script
 
 // --- Configurations ---
-const totalFrames = 600;
+const totalFrames = 2400;
 const immediateFramesCount = 30;
 const framePathPattern = (index) => `/frames/frame_${String(index).padStart(4, '0')}.webp`;
 const images = [];
@@ -472,9 +472,9 @@ window.toggleAutoScroll = function() {
       btn.querySelector('.btn-text').innerText = "Auto Scroll: ON";
     }
     
-    const fps = 60;
+    const fps = 240;
     const intervalMs = 1000 / fps;
-    const scrollStep = 6; // smooth scroll increment per frame (about 360px per second at 60fps)
+    const scrollStep = 1.5; // smooth scroll increment per frame (about 360px per second at 240fps)
     
     autoScrollInterval = setInterval(() => {
       const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
