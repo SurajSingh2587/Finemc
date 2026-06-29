@@ -1,7 +1,7 @@
 // FineMC Slide-Dashboard Controller Script
 
 // --- Configurations ---
-const totalFrames = 2400;
+const totalFrames = 900;
 const immediateFramesCount = 30;
 const framePathPattern = (index) => `/frames/frame_${String(index).padStart(4, '0')}.webp`;
 const images = [];
@@ -28,8 +28,9 @@ const ease = 0.1; // Smooth canvas glide interpolation
 let currentActiveSlideIdx = -1;
 let lastDrawnFrameIndex = 1; // Eased fallback cache
 
-const forceReducedMotion = localStorage.getItem('force-reduced-motion') === 'true';
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches || forceReducedMotion;
+const allowMotion = localStorage.getItem('allow-motion') === 'true';
+const prefersReducedMotion = !allowMotion;
+const forceAnimations = allowMotion;
 
 // --- DOM Elements ---
 const loader = document.getElementById('loader');
@@ -115,10 +116,13 @@ let lastRenderedPhysicalIndex = -1;
 // Draw frame on canvas with aspect ratio preservation (Object-Fit: Contain simulation)
 // Fits the entire animation frame inside the canvas viewport without any cropping.
 // Uses an O(1) lastDrawnFrameIndex fallback cache to prevent layout-blocking loops.
-function drawFrame(index, forceRedraw = false) {
-  let img = images[index];
+function drawFrame(logicalIndex, forceRedraw = false) {
+  // Map logical index (1 to 900) to physical index (1 to 240)
+  const physicalIndex = Math.min(240, Math.max(1, Math.round(((logicalIndex - 1) / (totalFrames - 1)) * (240 - 1)) + 1));
+  
+  let img = images[physicalIndex];
   if (img && img.complete) {
-    lastDrawnFrameIndex = index;
+    lastDrawnFrameIndex = physicalIndex;
   } else {
     img = images[lastDrawnFrameIndex];
   }
@@ -128,10 +132,10 @@ function drawFrame(index, forceRedraw = false) {
   }
 
   // Only redraw if the physical image or canvas size changed
-  if (!forceRedraw && index === lastRenderedPhysicalIndex) {
+  if (!forceRedraw && physicalIndex === lastRenderedPhysicalIndex) {
     return;
   }
-  lastRenderedPhysicalIndex = index;
+  lastRenderedPhysicalIndex = physicalIndex;
 
   const canvasWidth = canvas.width;
   const canvasHeight = canvas.height;
@@ -171,7 +175,7 @@ function updateLoadingProgress(count) {
   progressPercentage.innerText = `${percent}%`;
   
   if (dbLoaded) {
-    dbLoaded.innerText = `${loadedCount} / ${totalFrames}`;
+    dbLoaded.innerText = `${loadedCount} / 240`;
   }
   
   if (percent >= 100) {
@@ -209,7 +213,7 @@ function onPhase1ImageError(e) {
 function onProgressiveImageLoad() {
   loadedCount++;
   if (dbLoaded) {
-    dbLoaded.innerText = `${loadedCount} / ${totalFrames}`;
+    dbLoaded.innerText = `${loadedCount} / 240`;
   }
 }
 
@@ -217,7 +221,7 @@ function onProgressiveImageError(e) {
   console.warn("Progressive frame failed to load: ", e.target.src);
   loadedCount++;
   if (dbLoaded) {
-    dbLoaded.innerText = `${loadedCount} / ${totalFrames}`;
+    dbLoaded.innerText = `${loadedCount} / 240`;
   }
 }
 
@@ -235,7 +239,7 @@ function startPreloading() {
   }
 
   let phase1FinishedCount = 0;
-  const phase1Target = Math.min(immediateFramesCount, totalFrames);
+  const phase1Target = Math.min(immediateFramesCount, 240);
 
   function checkPhase1Finished() {
     phase1FinishedCount++;
@@ -260,45 +264,34 @@ function startPreloading() {
   }
 }
 
-// Phase 2: Load remaining frames in batches of 15 to prevent network choking
+// Phase 2: Load remaining frames progressively in the background using a concurrency-limited pool
 function startProgressivePreload() {
   const start = immediateFramesCount + 1;
-  if (start > totalFrames) return;
+  if (start > 240) return;
 
-  const batchSize = 15;
-  let currentLoadingIndex = start;
+  const maxConcurrency = 15;
+  let nextIndexToLoad = start;
 
-  function loadNextBatch() {
-    if (currentLoadingIndex > totalFrames) return;
-    
-    let loadedInBatch = 0;
-    const limit = Math.min(currentLoadingIndex + batchSize - 1, totalFrames);
-    const batchCount = limit - currentLoadingIndex + 1;
+  function loadNext() {
+    if (nextIndexToLoad > 240) return;
 
-    for (let i = currentLoadingIndex; i <= limit; i++) {
-      const img = new Image();
-      img.onload = () => {
-        images[i] = img;
-        onProgressiveImageLoad();
-        loadedInBatch++;
-        if (loadedInBatch === batchCount) {
-          currentLoadingIndex += batchSize;
-          setTimeout(loadNextBatch, 10);
-        }
-      };
-      img.onerror = (e) => {
-        onProgressiveImageError(e);
-        loadedInBatch++;
-        if (loadedInBatch === batchCount) {
-          currentLoadingIndex += batchSize;
-          setTimeout(loadNextBatch, 10);
-        }
-      };
-      img.src = framePathPattern(i);
-    }
+    const i = nextIndexToLoad++;
+    const img = new Image();
+    img.onload = () => {
+      images[i] = img;
+      onProgressiveImageLoad();
+      loadNext();
+    };
+    img.onerror = (e) => {
+      onProgressiveImageError(e);
+      loadNext();
+    };
+    img.src = framePathPattern(i);
   }
 
-  loadNextBatch();
+  for (let c = 0; c < maxConcurrency; c++) {
+    loadNext();
+  }
 }
 
 // --- Frame Animation Loop ---
@@ -530,9 +523,9 @@ window.toggleAutoScroll = function() {
       btn.querySelector('.btn-text').innerText = "Auto Scroll: ON";
     }
     
-    const fps = 240;
+    const fps = 90;
     const intervalMs = 1000 / fps;
-    const scrollStep = 1.5; // smooth scroll increment per frame (about 360px per second at 240fps)
+    const scrollStep = 4; // smooth scroll increment per frame (about 360px per second at 90fps)
     
     autoScrollInterval = setInterval(() => {
       const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
@@ -557,21 +550,44 @@ window.toggleAutoScroll = function() {
   }
 };
 
+window.toggleMotionSettings = function() {
+  const allowMotion = localStorage.getItem('allow-motion') === 'true';
+  if (allowMotion) {
+    localStorage.removeItem('allow-motion');
+  } else {
+    localStorage.setItem('allow-motion', 'true');
+  }
+  window.location.reload();
+};
+
 // --- Initialization ---
 function init() {
   if (dbInit) dbInit.innerText = "Yes (v7)";
   if (dbMotion) dbMotion.innerText = prefersReducedMotion.toString();
   
-  // Handle Force-Motion buttons
+  // Handle Motion Toggle button
+  const btnMotionToggle = document.getElementById('btn-motion-toggle');
+  if (btnMotionToggle) {
+    const allowMotion = localStorage.getItem('allow-motion') === 'true';
+    if (allowMotion) {
+      btnMotionToggle.classList.add('active');
+      btnMotionToggle.querySelector('.btn-text').innerText = "Motion: ON";
+    } else {
+      btnMotionToggle.classList.remove('active');
+      btnMotionToggle.querySelector('.btn-text').innerText = "Motion: OFF";
+    }
+  }
+
+  // Handle Diagnostics Panel Force-Motion button (compatibility sync)
   const btnForceMotion = document.getElementById('btn-force-motion');
   if (btnForceMotion) {
     btnForceMotion.style.display = 'inline-block';
-    if (forceReducedMotion) {
+    if (prefersReducedMotion) {
       btnForceMotion.innerText = "Allow Motion";
       btnForceMotion.style.backgroundColor = '#ff3344';
       btnForceMotion.style.color = '#ffffff';
       btnForceMotion.addEventListener('click', () => {
-        localStorage.removeItem('force-reduced-motion');
+        localStorage.setItem('allow-motion', 'true');
         window.location.reload();
       });
     } else {
@@ -579,7 +595,7 @@ function init() {
       btnForceMotion.style.backgroundColor = 'var(--color-cyan)';
       btnForceMotion.style.color = '#000000';
       btnForceMotion.addEventListener('click', () => {
-        localStorage.setItem('force-reduced-motion', 'true');
+        localStorage.removeItem('allow-motion');
         window.location.reload();
       });
     }

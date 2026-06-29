@@ -1169,3 +1169,47 @@ p {
   50% { transform: scale(1.3); opacity: 1; }
 }
 
+/* Floating HUD Motion Toggle Button */
+.hud-motion-toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: 180px; /* Sits to the left of Auto Scroll button */
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(3, 6, 17, 0.7);
+  border: 1px solid var(--border-glass);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+}
+
+.hud-motion-toggle-btn:hover {
+  background: rgba(3, 6, 17, 0.9);
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 15px var(--glow-cyan);
+  transform: translateY(-1px);
+}
+
+.hud-motion-toggle-btn.active {
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 15px var(--glow-cyan);
+}
+
+.hud-motion-toggle-btn .settings-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.6s ease;
+}
+
+.hud-motion-toggle-btn.active .settings-icon {
+  transform: rotate(180deg);
+  color: var(--color-cyan);
+}
+
