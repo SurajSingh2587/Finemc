@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FineMC | Cinematic Minecraft Squad</title>
+  <meta name="description" content="Four Friends. One Pixel Universe. Explore the ultimate cinematic Minecraft squad showcase built with advanced glassmorphism and liquid animations.">
+  <meta name="keywords" content="Minecraft, FineMC, Voxel Art, Gaming, Portfolio, Glassmorphism, Neon">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <script type="module" crossorigin src="/assets/index-C2BZuX6W.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BNAWj5Vd.css">
+</head>
+<body>
+  <!-- Cinematic Ambient lighting & particles -->
+  <div class="ambient-glow bg-red"></div>
+  <div class="ambient-glow bg-blue"></div>
+  <div class="noise-overlay"></div>
+  <div class="glass-particles-container" id="glass-particles"></div>
+
+  <!-- Glitchy Cyberpunk Preloader -->
+  <div id="loader" class="loader-overlay">
+    <div class="loader-content glass-panel">
+      <div class="hud-tag top-left">[SYS_BOOT]</div>
+      <div class="hud-tag top-right">v2.0.0</div>
+      <div class="loader-header">
+        <div class="logo-text">FINE<span class="highlight">MC</span></div>
+        <div class="logo-sub">INITIALIZING CINEMATIC HUD</div>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="loader-progress-bar"></div>
+        <div class="progress-glitch-glow"></div>
+      </div>
+      <div class="loader-status">
+        <span class="status-text">LOADING CINEMATIC VOXELS...</span>
+        <span class="progress-percentage" id="loader-percentage">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Split-Screen Layout Wrapper -->
+  <div class="app-layout-wrapper">
+    
+    <!-- Left Column: Non-Overlapping Canvas Viewport -->
+    <div class="canvas-viewport" id="canvas-viewport">
+      <!-- Centered Canvas Container -->
+      <div class="canvas-container">
+        <canvas id="scroll-canvas"></canvas>
+        <div class="canvas-vignette"></div>
+        
+        <!-- Voxel Core Gateway Reticle (Covers the Gemini star watermark - Resizable and Drag-moveable) -->
+        <div class="watermark-cover" id="watermark-cover">
+          <div class="gateway-core"></div>
+          <div class="gateway-ring"></div>
+          <div class="gateway-bracket"></div>
+          <div class="drag-handle" id="cover-drag" title="Drag to move">✥</div>
+          <div class="resize-handle" id="cover-resize" title="Drag to resize"></div>
+        </div>
+      </div>
+
+      <!-- Floating HUD timeline progress (Overlaid on canvas area but stays on left margin) -->
+      <div class="hud-timeline-container">
+        <div class="hud-tag" style="position: static; margin-bottom: 2rem; opacity: 0.8; font-weight: 700;">[SYS_TIMELINE]</div>
+        <div class="timeline-line">
+          <div class="timeline-progress" id="hud-timeline-progress"></div>
+          <div class="timeline-nodes-wrapper">
+            <a href="javascript:void(0);" onclick="scrollToPercent(0)" class="timeline-node active" id="node-0"><span class="node-dot"></span><span class="node-label">START</span></a>
+            <a href="javascript:void(0);" onclick="scrollToPercent(10)" class="timeline-node" id="node-1"><span class="node-dot"></span><span class="node-label">BOND</span></a>
+            <a href="javascript:void(0);" onclick="scrollToPercent(22)" class="timeline-node" id="node-2"><span class="node-dot"></span><span class="node-label">MADGAMERZ</span></a>
+            <a href="javascript:void(0);" onclick="scrollToPercent(34)" class="timeline-node" id="node-3"><span class="node-dot"></span><span class="node-label">ANEEQ</span></a>
+            <a href="javascript:void(0);" onclick="scrollToPercent(46)" class="timeline-node" id="node-4"><span class="node-dot"></span><span class="node-label">BISCUT</span></a>
+            <a href="javascript:void(0);" onclick="scrollToPercent(58)" class="timeline-node" id="node-5"><span class="node-dot"></span><span class="node-label">SUPERNOVA</span></a>
+            <a href="javascript:void(0);" onclick="scrollToPercent(70)" class="timeline-node" id="node-6"><span class="node-dot"></span><span class="node-label">CREED</span></a>
+            <a href="javascript:void(0);" onclick="scrollToPercent(80)" class="timeline-node" id="node-7"><span class="node-dot"></span><span class="node-label">ARCHIVES</span></a>
+            <a href="javascript:void(0);" onclick="scrollToPercent(88)" class="timeline-node" id="node-8"><span class="node-dot"></span><span class="node-label">GALLERY</span></a>
+            <a href="javascript:void(0);" onclick="scrollToPercent(98)" class="timeline-node" id="node-9"><span class="node-dot"></span><span class="node-label">EXIT</span></a>
+          </div>
+        </div>
+        <div class="hud-section-callout" id="hud-section-title">START</div>
+      </div>
+    </div>
+
+    <!-- Right Column: Glassmorphic Sidebar Dashboard -->
+    <aside class="sidebar-container glass-panel" id="main-sidebar">
+      <div class="sidebar-border-glow" id="sidebar-border-glow"></div>
+      <div class="sidebar-glow" id="sidebar-glow"></div>
+      
+      <!-- Slides Wrapper -->
+      <div class="sidebar-slides-container">
+        
+        <!-- Slide 0: Hero -->
+        <div class="sidebar-slide active" id="slide-hero">
+          <div class="hud-tag top-left">[DATA_INIT]</div>
+          <div class="hud-tag top-right">SLIDE // 00</div>
+          <div class="slide-content">
+            <div class="tagline"><span class="pulse-dot"></span> SQUAD INITIATIVE</div>
+            <h1>Four Friends.<br>One Pixel Universe.</h1>
+            <p>A fun cinematic Minecraft-style squad showcase built with scroll animation, liquid glass, and pure chaos energy.</p>
+            <div class="slide-instructions">
+              <span class="scroll-arrow">↓</span> Scroll to explore
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 1: About / The Bond -->
+        <div class="sidebar-slide" id="slide-about">
+          <div class="hud-tag top-left">[DATA_BOND]</div>
+          <div class="hud-tag top-right">SLIDE // 01</div>
+          <div class="slide-content">
+            <h3 class="section-tag">01 // THE SYSTEM</h3>
+            <h2>Late Nights. Voxel Worlds.</h2>
+            <p>Pixel Pact is a passion project born in the depths of late-night gaming sessions. We are four friends who love to build, code, design, and break things together.</p>
+            <p>From surviving our first night in a dirt hut to constructing massive automated redstone networks, our journey has been fueled by friendship, creativity, and a healthy dose of friendly fire.</p>
+            <div class="squad-stats-mini">
+              <div class="stat-box">
+                <span class="stat-num">04</span>
+                <span class="stat-lbl">Creators</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-num">240</span>
+                <span class="stat-lbl">Frames</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 2: MadGamerzYT (Red Theme) -->
+        <div class="sidebar-slide" id="slide-madgamerz">
+          <div class="hud-tag top-left">[DOSSIER_01]</div>
+          <div class="hud-tag top-right">SLIDE // 02</div>
+          <div class="slide-content card-red" style="--accent-color: #ff3344; --accent-glow: rgba(255, 51, 68, 0.25);">
+            <h3 class="section-tag" style="color: var(--accent-color);">02 // THE FIGHTER</h3>
+            <div class="slide-profile-header">
+              <div class="profile-avatar-wrapper">
+                <div class="avatar-frame">
+                  <div class="avatar-svg">
+                    <svg viewBox="0 0 100 100" class="svg-avatar">
+                      <rect x="25" y="45" width="50" height="40" rx="4" fill="#2d1519" stroke="#ff3344" stroke-width="2"/>
+                      <polygon points="25,45 35,25 50,38 65,25 75,45" fill="#ff3344"/>
+                      <circle cx="50" cy="38" r="3" fill="#ffffff"/>
+                      <circle cx="50" cy="62" r="10" fill="#ff3344" opacity="0.2"/>
+                      <path d="M46,60 L54,60 M46,65 L54,65 M48,58 L48,68 M52,58 L52,68" stroke="#ff3344" stroke-width="1.5"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="profile-title">
+                <h3 class="member-name">MadGamerzYT</h3>
+                <span class="member-class font-mono">CLASS // FIGHTER & DEV</span>
+              </div>
+            </div>
+            <p class="member-bio">The skilled fighter and developer of the squad. MadGamerzYT is strong in PvP, clutch moments, coding, and development. He can handle intense battles, make smart plays, and also contribute with technical skills. His combination of gaming talent and coding ability makes him one of the most powerful and useful members of the team.</p>
+            <div class="member-stats">
+              <div class="stat-line">
+                <span class="stat-name">PvP Clutch Ability // 95%</span>
+                <div class="stat-bar"><div class="bar-fill" data-width="95%"></div></div>
+              </div>
+              <div class="stat-line">
+                <span class="stat-name">Coding & Developing // 92%</span>
+                <div class="stat-bar"><div class="bar-fill" data-width="92%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 3: AneeqGamersYT (Blue Theme) -->
+        <div class="sidebar-slide" id="slide-aneeq">
+          <div class="hud-tag top-left">[DOSSIER_02]</div>
+          <div class="hud-tag top-right">SLIDE // 03</div>
+          <div class="slide-content card-blue" style="--accent-color: #3377ff; --accent-glow: rgba(51, 119, 255, 0.25);">
+            <h3 class="section-tag" style="color: var(--accent-color);">03 // THE GFX ARTIST</h3>
+            <div class="slide-profile-header">
+              <div class="profile-avatar-wrapper">
+                <div class="avatar-frame">
+                  <div class="avatar-svg">
+                    <svg viewBox="0 0 100 100" class="svg-avatar">
+                      <rect x="25" y="35" width="50" height="50" rx="8" fill="#15213d" stroke="#3377ff" stroke-width="2"/>
+                      <path d="M25,50 C25,25 75,25 75,50" fill="none" stroke="#3377ff" stroke-width="2"/>
+                      <text x="38" y="65" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="20" fill="#3377ff">A</text>
+                      <text x="52" y="65" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="20" fill="#66ccff">G</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="profile-title">
+                <h3 class="member-name">AneeqGamersYT</h3>
+                <span class="member-class font-mono">CLASS // GFX DESIGNER & BUILDER</span>
+              </div>
+            </div>
+            <p class="member-bio">A creative and talented member of the squad. AneeqGamersYT is a YouTuber and GFX artist who knows how to make things look professional, stylish, and eye-catching. His graphics skills, content style, and creative thinking give the team a strong visual identity. He brings design, creativity, and presentation power to the squad.</p>
+            <div class="member-stats">
+              <div class="stat-line">
+                <span class="stat-name">GFX Design & Art // 94%</span>
+                <div class="stat-bar"><div class="bar-fill" data-width="94%"></div></div>
+              </div>
+              <div class="stat-line">
+                <span class="stat-name">Building Detail // 88%</span>
+                <div class="stat-bar"><div class="bar-fill" data-width="88%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 4: DS_Biscut_YT (Yellow Theme) -->
+        <div class="sidebar-slide" id="slide-biscut">
+          <div class="hud-tag top-left">[DOSSIER_03]</div>
+          <div class="hud-tag top-right">SLIDE // 04</div>
+          <div class="slide-content card-yellow" style="--accent-color: #ffaa00; --accent-glow: rgba(255, 170, 0, 0.25);">
+            <h3 class="section-tag" style="color: var(--accent-color);">04 // THE BFF</h3>
+            <div class="slide-profile-header">
+              <div class="profile-avatar-wrapper">
+                <div class="avatar-frame">
+                  <div class="avatar-svg">
+                    <svg viewBox="0 0 100 100" class="svg-avatar">
+                      <rect x="25" y="35" width="50" height="50" rx="8" fill="#2e2213" stroke="#ffaa00" stroke-width="2"/>
+                      <path d="M25,50 C25,25 75,25 75,50" fill="none" stroke="#ffaa00" stroke-width="2"/>
+                      <rect x="42" y="48" width="16" height="8" fill="#ffaa00"/>
+                      <rect x="48" y="56" width="4" height="16" fill="#ffaa00"/>
+                      <text x="35" y="78" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="12" fill="#ffdd66">05</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="profile-title">
+                <h3 class="member-name">DS_Biscut_YT</h3>
+                <span class="member-class font-mono">CLASS // LOVABLE BUILDER</span>
+              </div>
+            </div>
+            <p class="member-bio">The cute, funny, and most lovable member of the squad. DS_Biscut_YT is a YouTuber with a unique personality and a fun vibe that makes the team more entertaining. He may not be the strongest in PvP, but his building skills are impressive, and his creativity makes him an important part of the group. He brings friendship, fun, positivity, and energy to the squad.</p>
+            <div class="member-stats">
+              <div class="stat-line">
+                <span class="stat-name">Pookie Cute Level // 100%</span>
+                <div class="stat-bar"><div class="bar-fill" data-width="100%"></div></div>
+              </div>
+              <div class="stat-line">
+                <span class="stat-name">Building Artistry // 92%</span>
+                <div class="stat-bar"><div class="bar-fill" data-width="92%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 5: SuperNovaa95 (Cyan Theme) -->
+        <div class="sidebar-slide" id="slide-supernova">
+          <div class="hud-tag top-left">[DOSSIER_04]</div>
+          <div class="hud-tag top-right">SLIDE // 05</div>
+          <div class="slide-content card-cyan" style="--accent-color: #00e5ff; --accent-glow: rgba(0, 229, 255, 0.25);">
+            <h3 class="section-tag" style="color: var(--accent-color);">05 // THE SQUAD LEADER</h3>
+            <div class="slide-profile-header">
+              <div class="profile-avatar-wrapper">
+                <div class="avatar-frame">
+                  <div class="avatar-svg">
+                    <svg viewBox="0 0 100 100" class="svg-avatar">
+                      <rect x="25" y="35" width="50" height="50" rx="8" fill="#0d262b" stroke="#00e5ff" stroke-width="2"/>
+                      <path d="M25,50 C25,25 75,25 75,50" fill="none" stroke="#00e5ff" stroke-width="2"/>
+                      <text x="42" y="66" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="28" fill="#00e5ff">S</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="profile-title">
+                <h3 class="member-name">SuperNovaa95</h3>
+                <span class="member-class font-mono">CLASS // ALL-IN-ONE</span>
+              </div>
+            </div>
+            <p class="member-bio">The leader, coder, programmer, and all-in-one creator of the squad. SuperNovaa95 is the brain behind the ideas and the person who can code, develop, manage, plan, build concepts, and turn normal ideas into something powerful. From programming and creativity to project planning and execution, he stands as the main all-rounder of the team.</p>
+            <div class="member-stats">
+              <div class="stat-line">
+                <span class="stat-name">Programming & Coding // 98%</span>
+                <div class="stat-bar"><div class="bar-fill" data-width="98%"></div></div>
+              </div>
+              <div class="stat-line">
+                <span class="stat-name">All-in-One flex // 99%</span>
+                <div class="stat-bar"><div class="bar-fill" data-width="99%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 6: The Creed (Manifesto) -->
+        <div class="sidebar-slide" id="slide-creed">
+          <div class="hud-tag top-left">[MANIFESTO]</div>
+          <div class="hud-tag top-right">SLIDE // 06</div>
+          <div class="slide-content">
+            <h3 class="section-tag">06 // THE CREED</h3>
+            <h2>Together, We Create.</h2>
+            <p class="creed-text" style="font-size: 1rem; line-height: 1.7; font-weight: 500; color: #fff; border-left: 3px solid var(--color-cyan); padding-left: 1.25rem;">Together, we are not just a normal group of friends. We are a creative squad of coders, YouTubers, artists, fighters, builders, and developers.</p>
+            <p class="creed-text" style="font-size: 0.9rem; line-height: 1.6; color: var(--color-text-muted);">Every member has their own special skill, role, and strength. When we work together, we can create something bigger, better, and unforgettable.</p>
+            <div class="creed-seal-container" style="display: flex; justify-content: center; margin-top: 1rem;">
+              <span style="font-size: 1.5rem; color: var(--color-cyan); text-shadow: 0 0 10px var(--glow-cyan); letter-spacing: 0.3em;">⬢ ⬡ ⬢</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 7: Archives / Highlights -->
+        <div class="sidebar-slide" id="slide-highlights">
+          <div class="hud-tag top-left">[MEM_REF]</div>
+          <div class="hud-tag top-right">SLIDE // 07</div>
+          <div class="slide-content">
+            <h3 class="section-tag">07 // THE ARCHIVES</h3>
+            <h2>Chaos & Ingenuity</h2>
+            <p style="font-size: 0.95rem; margin-bottom: 1rem;">A brief catalog of the custom features built inside our voxel worlds.</p>
+            <div class="archives-hud-list">
+              <div class="archive-hud-item">
+                <span class="icon">🧱</span>
+                <div class="info">
+                  <h4>Mega Base Projects</h4>
+                  <p>Sprawling voxel castles and capital cities where scale meets geometry.</p>
+                </div>
+              </div>
+              <div class="archive-hud-item">
+                <span class="icon">⚙️</span>
+                <div class="info">
+                  <h4>Redstone Logic</h4>
+                  <p>Automated sorting networks and coordinate transport hubs.</p>
+                </div>
+              </div>
+              <div class="archive-hud-item">
+                <span class="icon">⚔️</span>
+                <div class="info">
+                  <h4>Sovereign PvP</h4>
+                  <p>Late-night skirmishes, clutch defenses, and base infiltration pranks.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 8: Gallery -->
+        <div class="sidebar-slide" id="slide-gallery">
+          <div class="hud-tag top-left">[CINEMATICS]</div>
+          <div class="hud-tag top-right">SLIDE // 08</div>
+          <div class="slide-content">
+            <h3 class="section-tag">08 // CINEMATICS</h3>
+            <h2>Showcase Gallery</h2>
+            <div class="sidebar-gallery-grid">
+              <div class="gallery-thumbnail glass-panel" title="The Grand Citadel">
+                <img src="/gallery/gallery_base.webp" alt="Citadel Render">
+                <div class="lbl">Citadel</div>
+              </div>
+              <div class="gallery-thumbnail glass-panel" title="Redstone Core">
+                <img src="/gallery/gallery_redstone.webp" alt="Redstone Render">
+                <div class="lbl">Redstone</div>
+              </div>
+              <div class="gallery-thumbnail glass-panel" title="PvP Arena">
+                <img src="/gallery/gallery_arena.webp" alt="Arena Render">
+                <div class="lbl">Arena</div>
+              </div>
+              <div class="gallery-thumbnail glass-panel" title="Ender Void Portal">
+                <img src="/gallery/gallery_void.webp" alt="Void Render">
+                <div class="lbl">Void Core</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 9: Footer -->
+        <div class="sidebar-slide" id="slide-footer">
+          <div class="hud-tag top-left">[TERMINATE]</div>
+          <div class="hud-tag top-right">SLIDE // 09</div>
+          <div class="slide-content">
+            <h3 class="section-tag">09 // DISCONNECT</h3>
+            <h2>Ready to Join FineMC?</h2>
+            <p>Server integration and texture releases are pending development logs.</p>
+            
+            <!-- Copy Server IP Box -->
+            <div class="server-ip-box glass-panel">
+              <div class="ip-title">SERVER IP</div>
+              <div class="ip-row">
+                <span class="ip-address font-mono" id="server-ip">play.finemc.fun</span>
+                <button class="copy-ip-btn-main primary-btn" onclick="copyServerIP(this)">Copy IP</button>
+              </div>
+            </div>
+
+            <div class="footer-buttons" style="flex-direction: column; width: 100%; gap: 0.75rem; margin-top: 0.75rem;">
+              <a href="https://github.com" target="_blank" rel="noopener" class="secondary-btn glass-btn" style="width: 100%;">Connect GitHub</a>
+              <a href="javascript:void(0);" onclick="scrollToPercent(0)" class="secondary-btn glass-btn" style="width: 100%;">Return to Start</a>
+            </div>
+            <div class="sidebar-footer-links" style="margin-top: 1rem; border-top: 1px solid var(--border-glass); padding-top: 1rem; width: 100%;">
+              <p class="copyright" style="font-size: 0.8rem; margin-bottom: 0.5rem;">&copy; 2026 FineMC. Built for fun by four friends.</p>
+              <div class="social-links" style="justify-content: center; gap: 1.5rem;">
+                <a href="#" class="social-link">Discord</a>
+                <a href="#" class="social-link">YouTube</a>
+                <a href="#" class="social-link">Twitter</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+  </div>
+
+  <!-- Virtual Scroll Buffer to map browser scroll to slides -->
+  <div id="scroll-buffer"></div>
+
+  <!-- Debug Panel -->
+  <div id="debug-panel" style="display: none; position: fixed; bottom: 20px; left: 20px; z-index: 9999; background: rgba(3, 6, 17, 0.9); border: 1px solid var(--color-cyan); padding: 15px; border-radius: 12px; font-family: monospace; font-size: 11px; color: #fff; pointer-events: auto; max-width: 320px; box-shadow: 0 0 25px var(--glow-cyan); flex-direction: column; gap: 5px;">
+    <div class="debug-header" style="font-weight: bold; border-bottom: 1px solid var(--color-cyan); padding-bottom: 5px; margin-bottom: 5px; color: var(--color-cyan); display: flex; justify-content: space-between;">
+      <span>PIXEL PACT DIAGNOSTICS</span>
+      <span style="cursor: pointer; opacity: 0.6;" onclick="this.parentElement.style.display='none'">[x]</span>
+    </div>
+    <div class="debug-line" style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 2px;"><span>Init Fired:</span><span id="db-init" style="color: var(--color-cyan);">No</span></div>
+    <div class="debug-line" style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 2px;"><span>Scroll Count:</span><span id="db-scroll-count" style="color: var(--color-cyan);">0</span></div>
+    <div class="debug-line" style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 2px;"><span>Scroll Y:</span><span id="db-scroll-y" style="color: var(--color-cyan);">0px</span></div>
+    <div class="debug-line" style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 2px;"><span>Max Scroll:</span><span id="db-max-scroll" style="color: var(--color-cyan);">0px</span></div>
+    <div class="debug-line" style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 2px;"><span>Loaded Frames:</span><span id="db-loaded" style="color: var(--color-cyan);">0 / 240</span></div>
+    <div class="debug-line" style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 2px;"><span>Current Frame:</span><span id="db-current" style="color: var(--color-cyan);">1</span></div>
+    <div class="debug-line" style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 2px;"><span>Target Frame:</span><span id="db-target" style="color: var(--color-cyan);">1</span></div>
+    <div class="debug-line" style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 2px;">
+      <span>Reduced Motion:</span>
+      <span>
+        <span id="db-motion" style="color: var(--color-cyan);">false</span>
+        <button id="btn-force-motion" style="display: none; background: var(--color-cyan); color: #000; border: none; padding: 2px 6px; border-radius: 4px; font-size: 9px; cursor: pointer; margin-left: 6px; font-weight: bold; font-family: sans-serif; transition: all 0.2s ease;">Force On</button>
+      </span>
+    </div>
+    <div class="debug-line" style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 2px;"><span>Last Error:</span><span id="db-error" style="color: #ff3344; max-width: 180px; word-break: break-all;">None</span></div>
+  </div>
+
+  <!-- Main JavaScript -->
+</body>
+</html>
